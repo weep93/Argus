@@ -63,54 +63,96 @@ TOOL_SCHEMAS = [
 # defining the agents, used AI to summarize a computer optimized personality
 
 AGENTS = {
-    "general": {
-        "model": "deepseek/deepseek-chat", # check the slug on openrouter.ai/models
+    "optimist": {
+        "model": "openrouter/free",
         "tools": [],
         "system": """
-You are the general agent.
+You are the Optimist.
 
-Answer the users question to the best of your ability.
-Focus on general reasoning and accuracy.
-Do not make things up if you are unsure.
+Look for realistic ways the proposed idea could succeed.
+Identify opportunities, benefits, favorable evidence, and
+conditions under which the positive outcome is plausible.
+
+Do not ignore risks.
+Do not assume something is good merely because it is possible.
+Challenge pessimistic arguments when their assumptions are weak.
+
+You must remain intellectually honest.
+If the evidence favors the opposing position, say so.
 """,
     },
 
-    "coding": {
-        "model": "qwen/qwen3-coder", # check the slug on openrouter.ai/models
+    "pessimist": {
+        "model": "openrouter/free",
         "tools": [],
         "system": """
-You are the coding agent.
+You are the Pessimist.
 
-Focus on programming, debugging, APIs, software,
-and technical implementation.
+Look for realistic failure modes, unintended consequences,
+risks, hidden assumptions, and reasons the proposed idea may fail.
 
-Look for bugs and explain how to fix them.
+Do not assume something is bad merely because it has risks.
+Challenge optimistic arguments when they rely on speculation
+or unsupported assumptions.
+
+You must remain intellectually honest.
+If the evidence favors the opposing position, say so.
 """,
     },
 
-    "security": {
-        "model": "deepseek/deepseek-chat", # check the slug on openrouter.ai/models
-        "tools": ["get_logs"], # only this agent gets tools
+    "logician": {
+        "model": "openrouter/free",
+        "tools": [],
         "system": """
-You are the security agent.
+You are the Technical Logician.
 
-Focus on cybersecurity, networking, Linux,
-Windows, infrastructure, authentication,
-and security.
+Focus on logical consistency, evidence quality, assumptions,
+causal reasoning, contradictions, uncertainty, and whether
+conclusions actually follow from the premises.
 
-Be technically accurate and point out
-security risks when relevant.
+Do not take the optimistic or pessimistic side by default.
 
-You have read-only access to a live server.
-When the question is about what a service is doing, whether it is up,
-or why something failed : call get_logs instead of guessing.
-Read the JSON (ok / stdout / rc) and answer from the real output.
-If a tool returns ok:false, say what the error was.
-Never invent log contents.
+Your job is to identify where both sides are reasoning correctly
+or incorrectly.
+
+Be precise and skeptical without being contrarian for its own sake.
 """,
     },
 }
 
+def build_debate_prompt(user_prompt, results):
+    transcript = "\n\n".join(
+        f"==== {r['agent'].upper()} ====\n{r['answer']}"
+        for r in results
+        if not r["error"]
+    )
+
+    return f"""
+You are participating in a structured debate.
+
+ORIGINAL QUESTION:
+{user_prompt}
+
+OTHER PARTICIPANTS' INITIAL ARGUMENTS:
+
+{transcript}
+
+Respond to the other participants.
+
+You MUST:
+
+1. Identify the strongest argument against your position.
+2. Explain whether you agree or disagree with it.
+3. Identify a weakness in at least one opposing argument.
+4. Address any unsupported assumptions.
+5. State whether the opposing arguments changed your confidence.
+6. Do not agree merely because another agent sounds convincing.
+
+Attack arguments, not participants.
+
+Your response should focus on reasoning rather than repeating your
+original answer.
+"""
 
 # defining the worker structure
 
@@ -211,6 +253,28 @@ def run_agents(user_prompt, names=None):
     return results
 
 
+def run_debate_round(user_prompt, results):
+    debate_prompt = build_debate_prompt(user_prompt, results)
+
+    debate_results = []
+
+    with ThreadPoolExecutor(max_workers=len(AGENTS)) as executor:
+        futures = [
+            executor.submit(
+                run_agent,
+                name,
+                AGENTS[name],
+                debate_prompt,
+            )
+            for name in AGENTS
+        ]
+
+        for future in as_completed(futures):
+            debate_results.append(future.result())
+
+    return debate_results
+
+
 # main
 
 def main():
@@ -227,38 +291,50 @@ def main():
  `-----'      `-----' `--' '--'`--' '--'     `-----' '--'   '--'   
     """)
 
+
     print("Multi Agent Starting...")
 
     user_input = input("\ncupid: ")
 
-    print("\nAgents Thinking...")
+    print("\n=== ROUND 1: INDEPENDENT ANALYSIS ===")
 
-    # the router picks who should answer
-    agents, how = pick_agents(user_input)
-
-    print(f"\n[router] {', '.join(agents)} ({how})")
-
-    results = run_agents(user_input, agents)
+    results = run_agents(user_input)
 
     for result in results:
-
         print(f"\n==== {result['agent'].upper()} ====")
 
         if result["error"]:
             print("[ERROR]", result["error"])
-
         else:
             print(result["answer"])
 
         print()
 
-    # the judge merges the answers into one
-    final = final_answer(user_input, results)
+    print("\n=== ROUND 2: DEBATE ===")
+
+    debate_results = run_debate_round(user_input, results)
+
+    for result in debate_results:
+        print(f"\n==== {result['agent'].upper()} DEBATE ====")
+
+        if result["error"]:
+            print("[ERROR]", result["error"])
+        else:
+            print(result["answer"])
+
+        print()
+
+    print("\n=== JUDGE ===")
+
+    final = final_answer(
+        user_input,
+        results,
+        debate_results,
+    )
 
     print("\n==== FINAL (" + str(final["by"]) + ") ====")
-
     print(final["answer"])
 
-
+ 
 if __name__ == "__main__":
     main()

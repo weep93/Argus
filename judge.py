@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ load_dotenv()
 
 # // config
 
-JUDGE_MODEL = "deepseek/deepseek-chat" # merges the worker answers into one
+JUDGE_MODEL = "deepseek/deepseek-chat:free"
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -16,55 +17,158 @@ client = OpenAI(
 )
 
 
-# defining the judge
+def final_answer(user_prompt, initial_results, debate_results):
+    """Judge the independent arguments and the subsequent debate."""
 
-def final_answer(user_prompt, results):
-    """Merge the agent answers into one reply. One agent = no judge call needed."""
+    initial_good = [
+        r for r in initial_results
+        if r["answer"] and not r["error"]
+    ]
 
-    good = [r for r in results if r["answer"] and not r["error"]]
+    debate_good = [
+        r for r in debate_results
+        if r["answer"] and not r["error"]
+    ]
 
-    if not good:
-        errors = "; ".join(f"{r['agent']}: {r['error']}" for r in results)
-        return {"answer": "every agent failed: " + errors, "by": None}
+    if not initial_good:
+        return {
+            "answer": "Every initial agent failed.",
+            "by": None,
+        }
 
-    # nothing to merge : do not waste a call
-    if len(good) == 1:
-        return {"answer": good[0]["answer"], "by": good[0]["agent"]}
+    # Build Round 1 transcript
+    initial_blocks = []
 
-    # tell the judge who dropped out, so it can say so instead of hiding it
-    skipped = [r["agent"] for r in results if not (r["answer"] and not r["error"])]
+    for r in initial_good:
+        initial_blocks.append(
+            "--- " + r["agent"] + " INITIAL POSITION ---\n"
+            + r["answer"]
+        )
 
-    note = ""
-    if skipped:
-        note = "Note: these agents failed or returned nothing: " + ", ".join(skipped) + ".\n\n"
+    initial_transcript = "\n\n".join(initial_blocks)
 
-    # hand the answers to the judge with the agent names attached
-    blocks = []
-    for r in good:
-        blocks.append("--- " + r["agent"] + " agent ---\n" + r["answer"])
+    # Build Round 2 transcript
+    debate_blocks = []
 
-    ask = """You are the judge.
+    for r in debate_good:
+        debate_blocks.append(
+            "--- " + r["agent"] + " DEBATE RESPONSE ---\n"
+            + r["answer"]
+        )
 
-Several agents answered the same task. Merge their answers into ONE final answer.
+    debate_transcript = "\n\n".join(debate_blocks)
 
-Rules:
-- Keep any concrete facts (log lines, commands, numbers) exactly as given
-- If agents disagree, say so, and say which one is right and why
-- Do not pad : if one agent already answered well, keep it short
-- Never invent anything no agent said
+    ask = f"""
+You are an independent debate judge.
 
-The user task was:
-""" + note + user_prompt + "\n\n" + "\n\n".join(blocks)
+Your job is NOT to choose the most popular argument.
+
+Evaluate the reasoning objectively.
+
+ORIGINAL QUESTION:
+
+{user_prompt}
+
+
+================ ROUND 1: INITIAL POSITIONS ================
+
+{initial_transcript}
+
+
+================ ROUND 2: DEBATE ================
+
+{debate_transcript}
+
+
+Evaluate the arguments using:
+
+- logical consistency
+- evidence
+- assumptions
+- counterarguments
+- uncertainty
+- unsupported claims
+- internal contradictions
+- whether conclusions actually follow from the evidence
+
+Identify:
+
+1. strongest arguments
+2. weakest arguments
+3. unresolved disagreements
+4. arguments that changed during the debate
+5. areas where participants incorrectly assumed consensus
+6. important uncertainties
+7. claims that would require additional evidence
+
+Do NOT decide based on:
+- popularity
+- how confidently an agent writes
+- which agent spoke last
+- majority opinion
+- personality
+
+If an argument is strong even though only one agent made it, recognize that.
+
+If all agents share the same unsupported assumption, explicitly identify it.
+
+If the debate did not resolve an issue, say that it remains unresolved.
+
+Return ONLY valid JSON using this exact structure:
+
+{{
+    "strongest_arguments": [],
+    "weakest_arguments": [],
+    "unresolved_disagreements": [],
+    "position_changes": [],
+    "false_consensus": [],
+    "uncertainties": [],
+    "claims_needing_evidence": [],
+    "final_synthesis": ""
+}}
+"""
 
     try:
         response = client.chat.completions.create(
             model=JUDGE_MODEL,
-            messages=[{"role": "user", "content": ask}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": ask,
+                }
+            ],
         )
-        answer = response.choices[0].message.content
+
+        raw = response.choices[0].message.content
+
+        # Validate that the judge actually returned JSON
+        try:
+            judged = json.loads(raw)
+
+            return {
+                "answer": json.dumps(
+                    judged,
+                    indent=2,
+                ),
+                "by": "judge",
+            }
+
+        except json.JSONDecodeError:
+            # Judge answered but ignored the JSON requirement
+            return {
+                "answer": raw,
+                "by": "judge",
+            }
 
     except Exception as e:
-        # the judge died : still give the user the raw answers
-        answer = "judge failed (" + str(e) + "). Raw agent answers:\n\n" + "\n\n".join(blocks)
-
-    return {"answer": answer, "by": "judge"}
+        # Judge failed: preserve the debate instead of losing everything
+        return {
+            "answer": (
+                "Judge failed (" + str(e) + ").\n\n"
+                "ROUND 1:\n\n"
+                + initial_transcript
+                + "\n\nROUND 2:\n\n"
+                + debate_transcript
+            ),
+            "by": "judge-error",
+        }

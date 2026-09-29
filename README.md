@@ -1,122 +1,107 @@
-# ai-agents
+# Deliberate
+
+A multi-agent AI research project exploring whether structured debate and independent reasoning can improve the quality of AI-generated conclusions.
+
+## Research Question
+
+> Does having multiple AI agents independently analyze and debate a question produce more reliable reasoning than asking a single AI to answer it?
+
+## Current Architecture
 
 ```text
-┌─────────────────────────────────────────┐
-│              AI AGENTS                  │
-│                                         │
-│  What is this?                          │
-│  Why did you build it?                  │
-│  How does it work?                      │
-│  How do I run it?                       │
-│  What did you discover?                 │
-│                                         │
-│  Architecture diagram                   │
-│  Screenshots / demo                     │
-│  Results                                │
-│  Future work                            │
-└─────────────────────────────────────────┘
+                    QUESTION
+                       |
+          +------------+------------+
+          |            |            |
+       Optimist     Pessimist    Logician
+          |            |            |
+          +------------+------------+
+                       |
+                Independent Analysis
+                       |
+                       v
+                  Debate Round
+                       |
+                       v
+                     Judge
+                       |
+                       v
+                 Final Analysis
 ```
 
-This is a project I made to manage my home lab.
+## Current Agents
 
-I built it because I regularly use different AI agents for different things, and I needed continuity as well as security across all my systems.
+### Optimist
 
+Looks for realistic opportunities, benefits, favorable evidence, and conditions under which an outcome could succeed.
 
+### Pessimist
 
+Looks for failure modes, unintended consequences, risks, hidden assumptions, and reasons an outcome could fail.
 
-[9/3/26] 
-- Added the very very base function to make the ai out put what i ask it
-- Configured API keys in .env 
+### Logician
 
-\(^o^)/ chat gpt crashed and gemeni is awful 
+Focuses on logical consistency, evidence quality, assumptions, causal reasoning, contradictions, and uncertainty.
 
+The personalities are intentionally different, but each agent is instructed to remain intellectually honest and update its position when presented with stronger reasoning.
 
-# Overall Structure
-```
-                       ┌── DeepSeek ─────── General
-                       │
-User → Task Router ────┼── Qwen3-Coder ──── Coding
-                       │
-                       └── Qwen3/DeepSeek ─ Security
-                                │
-                                ▼
-                     Hermes DeepSeek Judge
-                                │
-                                ▼
-                         Final Response
-```
+## Current Experiment
 
-for this im using Qwen3/deepseek 
+The system currently tests questions with meaningful tradeoffs rather than questions with obvious answers.
 
-* Each agent is designed to not know about each other, to get the most unbiases normal anwser 
+Example:
 
+> Will widespread AI automation create more economic opportunity than it destroys?
 
-[DEV LOGS]
+Agents first answer independently.
 
+They then receive the other agents' arguments and participate in a second debate round. Agents are asked to identify the strongest opposing argument and report whether it changed their confidence.
 
+A separate judge evaluates the resulting arguments.
 
+## Research Data
 
-[UPDATES]
-- rewrote old `main.py` it now uses openrouter for all 3 agents with different instructions 
-- updated `.env` with OPENROUTER keys
+Future experiments will record structured information such as:
 
-[UP NEXT]
-- move personalities/instructions to /dev eventually 
+* Initial position
+* Initial confidence
+* Arguments presented
+* Position changes
+* Confidence changes
+* Strongest arguments
+* Weakest arguments
+* Unresolved disagreements
+* Unsupported claims
+* Remaining uncertainties
+* Evidence that could change an agent's position
 
+This will allow comparisons between different agent counts, models, debate structures, and judging methods.
 
+## Current Status
 
-[9/10/26]
-Determined further structure for the agents
-```
-ai-agents/
-|---main.py  runts to router > agents > judge
-|---core/ 
-|    |----router.py #decides which agent handles it 
-|    |----judge.py #where hermes is gonna live 
-|    |----memory.py # continuality
-|
-|---agents/
-|     |----coding.py security.py general.py
-|     |----agent.py # agent class base ???
-|
-|---memory/ (gitignore this)
-|---tools/ #this is for all agents tools 
-```
+**Experimental / Early Development**
 
+The current goal is to validate the basic deliberation pipeline before expanding the system.
 
-[9/11/26]
-Added tools for security agent 
-- `get_logs.py` <-- restricted to safe commands
+Planned experiments include:
 
+* 3 → 5 → 10+ agents
+* Different model families
+* Multiple judges
+* Multiple debate rounds
+* Controlled model comparisons
+* Automated question datasets
+* Position and confidence tracking
+* Evaluation of whether debate actually improves reasoning quality
 
-# Added router and judge logic
-- added `router.py` #filters the prompts and sends it to the rigth agent 
-- added `judge.py` #takes the output and validates it from all agents
+## Tech Stack
 
+* Python
+* OpenAI-compatible API
+* OpenRouter
+* Concurrent agent execution
+* Structured JSON evaluation *(in development)*
 
+## Disclaimer
 
-
-\(^‿^)/
-
-[NEXT UP]
-- add more security tools to security agent (start with non invasive)
-- start researching other things to add 
-- trading agent ??? 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+This project is an experiment in AI reasoning and multi-agent deliberation. Its outputs are research data and should not automatically be treated as factual or authoritative conclusions.
