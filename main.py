@@ -2,6 +2,10 @@
 import json
 import os
 import time
+import uuid
+from research.logger import log_experiment 
+
+
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -296,6 +300,11 @@ def main():
 
     user_input = input("\ncupid: ")
 
+
+    # initalizing ID/STARTED
+    experiment_id = str(uuid.uuid4())
+    experiment_started = time.perf_counter()
+
     print("\n=== ROUND 1: INDEPENDENT ANALYSIS ===")
 
     results = run_agents(user_input)
@@ -335,6 +344,42 @@ def main():
     print("\n==== FINAL (" + str(final["by"]) + ") ====")
     print(final["answer"])
 
- 
+    # // DATA TO BE WRITTEN TO LOG
+    elapsed_ms = round(
+        time.perf_counter() - experiment_started) * 1000
+    record = {
+        "experiment_id": experiment_id,
+        "condition": "three_agent_debate",
+        "experiment_type": "interactive_unscored",
+        "question_id": None,
+        "question": user_input,
+
+        "agent_models" : {
+            name: config["model"] 
+            for name, config in AGENTS.items()
+        },
+
+        "initial_results": results,
+        "debate_results": debate_results,
+
+        "judge": final, 
+        "judge_model": "deepseek/deepseek-chat:free",
+
+        "elapsed_ms": elapsed_ms,
+
+
+        # // NO ANWSER KEY AVAILBLE IN INTERACTIVE
+        "correct_answer": None,
+        "is_correct": None, 
+        "scoring_-status": "not_scored", 
+    }
+
+
+    try: 
+        log_experiment(record)
+        print(f"\n[Research] Experiment saved: {experiment_id}")
+    except Exception as e:
+        print(f"\n[Research] Logging failed: {e}")
+
 if __name__ == "__main__":
     main()

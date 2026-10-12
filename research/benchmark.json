@@ -1,0 +1,39 @@
+
+[
+  {
+    "question_id": "math_001",
+    "question": "What is 7 multiplied by 8?",
+    "choices": {
+      "A": "54",
+      "B": "56",
+      "C": "64",
+      "D": "48"
+    },
+    "correct_answer": "B",
+    "category": "math"
+  },
+  {
+    "question_id": "science_001",
+    "question": "Which planet is known as the Red Planet?",
+    "choices": {
+      "A": "Venus",
+      "B": "Jupiter",
+      "C": "Mars",
+      "D": "Mercury"
+    },
+    "correct_answer": "C",
+    "category": "science"
+  },
+  {
+    "question_id": "computing_001",
+    "question": "Which protocol is commonly used to securely access a remote Linux shell?",
+    "choices": {
+      "A": "FTP",
+      "B": "SSH",
+      "C": "HTTP",
+      "D": "DHCP"
+    },
+    "correct_answer": "B",
+    "category": "computing"
+  }
+]

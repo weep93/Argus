@@ -1,6 +1,6 @@
 # Deliberate
 
-A multi-agent AI research project exploring whether structured debate and independent reasoning can improve the quality of AI-generated conclusions.
+A multi-agent AI research project exploring whether structured debate and independent reasoning can improve the quality, reliability, and correctness of AI-generated conclusions.
 
 ## Research Question
 
@@ -9,25 +9,27 @@ A multi-agent AI research project exploring whether structured debate and indepe
 ## Current Architecture
 
 ```text
-                    QUESTION
-                       |
-          +------------+------------+
-          |            |            |
-       Optimist     Pessimist    Logician
-          |            |            |
-          +------------+------------+
-                       |
-                Independent Analysis
-                       |
-                       v
-                  Debate Round
-                       |
-                       v
-                     Judge
-                       |
-                       v
-                 Final Analysis
+                         QUESTION
+                            |
+             +--------------+--------------+
+             |              |              |
+          Optimist       Pessimist       Logician
+             |              |              |
+             +--------------+--------------+
+                            |
+                  Independent Analysis
+                            |
+                            v
+                       Debate Round
+                            |
+                            v
+                          Judge
+                            |
+                            v
+                    Final Analysis
 ```
+
+The research pipeline also includes a single-model baseline for comparing performance against the multi-agent approach.
 
 ## Current Agents
 
@@ -45,63 +47,149 @@ Focuses on logical consistency, evidence quality, assumptions, causal reasoning,
 
 The personalities are intentionally different, but each agent is instructed to remain intellectually honest and update its position when presented with stronger reasoning.
 
+## The Judge
+
+The judge evaluates the agents' initial arguments and debate responses.
+
+Its current analysis considers:
+
+- Strongest and weakest arguments
+- Unresolved disagreements
+- Changes in agent positions
+- Potential false consensus
+- Remaining uncertainties
+- Claims requiring additional evidence
+- Final synthesis of the discussion
+
+The judge is a separate evaluation component, not a guaranteed source of truth. Its conclusions can be incorrect and must be evaluated independently.
+
 ## Current Experiment
 
-The system currently tests questions with meaningful tradeoffs rather than questions with obvious answers.
+The project now has an initial multiple-choice benchmark at `research/benchmark.json`.
 
-Example:
+The benchmark runner compares two conditions:
 
-> Will widespread AI automation create more economic opportunity than it destroys?
+**Single-model baseline**
+- One model answers each question without multi-agent debate.
 
-Agents first answer independently.
+**Three-agent debate**
+- Optimist, Pessimist, and Logician independently respond.
+- Each agent participates in a debate round.
+- The judge evaluates the resulting arguments and produces a synthesis.
 
-They then receive the other agents' arguments and participate in a second debate round. Agents are asked to identify the strongest opposing argument and report whether it changed their confidence.
+The runner compares predictions against the benchmark's answer key and records experiment data in `data/experiments.jsonl`.
 
-A separate judge evaluates the resulting arguments.
+### Initial Pipeline Test
+
+The first benchmark contains three basic questions covering mathematics, science, and computing.
+
+| Condition | Scored answers | Correct | Accuracy |
+|---|---:|---:|---:|
+| Single-model baseline | 2 | 2 | 100% |
+| Three-agent debate | 3 | 3 | 100% |
+
+**Important limitations:**
+
+- One baseline answer could not be parsed into a multiple-choice selection, so it was excluded from the baseline score.
+- The benchmark contains only three relatively straightforward questions.
+- The models use free OpenRouter routing, which may not guarantee a consistent underlying model.
+- These results validate an initial pipeline run; they do not demonstrate that debate improves accuracy.
+
+The next step is to improve answer extraction, make the scoring process reliable, and expand the benchmark before drawing conclusions.
 
 ## Research Data
 
-Future experiments will record structured information such as:
+Experiments are recorded as JSON Lines in `data/experiments.jsonl`.
 
-* Initial position
-* Initial confidence
-* Arguments presented
-* Position changes
-* Confidence changes
-* Strongest arguments
-* Weakest arguments
-* Unresolved disagreements
-* Unsupported claims
-* Remaining uncertainties
-* Evidence that could change an agent's position
+The current records include information such as:
 
-This will allow comparisons between different agent counts, models, debate structures, and judging methods.
+- Experiment and question identifiers
+- Question category and prompt
+- Available choices and correct answer
+- Baseline model and prediction
+- Initial agent responses
+- Debate responses
+- Judge output and model
+- Correctness results
+- Execution time
+
+Future experiments will track additional measures where appropriate:
+
+- Initial position and confidence
+- Position changes after debate
+- Confidence changes
+- Argument quality
+- Unsupported claims
+- Unresolved disagreements
+- Evidence that could change an agent's position
+
+## Scoring Rubric
+
+### 1. Correctness — Primary Metric
+
+- **1:** Prediction matches the benchmark answer key.
+- **0:** Prediction is incorrect, unanswered, or invalid.
+
+Unparseable predictions should be recorded separately during development so that answer-formatting failures can be distinguished from reasoning failures. Final accuracy calculations should use a consistent, explicitly documented denominator.
+
+### 2. Evidence and Reasoning Quality
+
+- **0:** No relevant justification.
+- **1:** Weak justification with major gaps.
+- **2:** Sound, relevant justification supporting the answer.
+- **3:** Strong, relevant justification that supports the answer with clear reasoning and appropriate evidence.
+
+### 3. Unsupported Claims
+
+- **0:** No material unsupported claims detected.
+- **1:** One questionable claim.
+- **2:** Multiple or significant unsupported claims.
+
+These rubric dimensions are proposed evaluation criteria; they require consistent scoring procedures before they can support meaningful comparisons.
+
+## Experimental Principles
+
+To investigate whether debate adds value:
+
+- Use the same questions across comparison conditions.
+- Keep model choices and configurations documented.
+- Compare the baseline and debate system on the same benchmark.
+- Record failed, invalid, and unparseable outputs.
+- Track execution time as well as answer quality.
+- Expand the dataset before making broad claims.
+- Avoid treating judge confidence or agent consensus as proof of correctness.
+
+## Planned Experiments
+
+- [ ] Fix baseline answer parsing and scoring.
+- [ ] Add progress reporting and API timeouts.
+- [ ] Expand the benchmark with varied difficulty levels.
+- [ ] Compare baseline and debate accuracy on identical questions.
+- [ ] Evaluate evidence and reasoning quality.
+- [ ] Measure unsupported claims and unresolved uncertainty.
+- [ ] Compare different model families.
+- [ ] Test multiple judges.
+- [ ] Compare different numbers of agents: 3, 5, and 10+.
+- [ ] Investigate multiple debate rounds.
+- [ ] Track position and confidence changes.
+- [ ] Evaluate whether debate improves results enough to justify its additional latency and API usage.
+
+## Tech Stack
+
+- Python
+- OpenAI-compatible API
+- OpenRouter
+- Concurrent agent execution
+- JSON-based benchmark dataset
+- JSON Lines experiment logging
+- Structured judge evaluation
 
 ## Current Status
 
 **Experimental / Early Development**
 
-The current goal is to validate the basic deliberation pipeline before expanding the system.
-
-Planned experiments include:
-
-* 3 → 5 → 10+ agents
-* Different model families
-* Multiple judges
-* Multiple debate rounds
-* Controlled model comparisons
-* Automated question datasets
-* Position and confidence tracking
-* Evaluation of whether debate actually improves reasoning quality
-
-## Tech Stack
-
-* Python
-* OpenAI-compatible API
-* OpenRouter
-* Concurrent agent execution
-* Structured JSON evaluation *(in development)*
+The basic deliberation pipeline and an initial benchmark run are working. Reliable scoring, broader evaluation, and controlled comparisons remain ongoing work.
 
 ## Disclaimer
 
-This project is an experiment in AI reasoning and multi-agent deliberation. Its outputs are research data and should not automatically be treated as factual or authoritative conclusions.
+Deliberate is an experimental research project exploring AI reasoning and multi-agent deliberation. Its outputs are research data and should not automatically be treated as factual or authoritative conclusions.
