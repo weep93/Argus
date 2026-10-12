@@ -9,7 +9,7 @@ load_dotenv()
 
 # // config
 
-JUDGE_MODEL = "deepseek/deepseek-chat:free"
+JUDGE_MODEL = "openrouter/free" # temporary they removed my beautiful deekseek from me :(
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",

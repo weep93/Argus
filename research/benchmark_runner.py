@@ -8,7 +8,13 @@ from main import AGENTS, run_agents, run_debate_round
 from judge import client, JUDGE_MODEL, final_answer
 from research.logger import log_experiment
 
-BENCHMARK_PATH = Path("research/benchmark.json")
+import sys
+
+BENCHMARK_PATH = Path(
+    sys.argv[1] if len(sys.argv) > 1 else "research/benchmark.json"
+)
+
+
 BASELINE_MODEL = "openrouter/free"
 
 

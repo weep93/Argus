@@ -1,0 +1,122 @@
+[
+  {
+    "question_id": "mmlu_001",
+    "question": "From the very beginning, I wrote to explain my own life to myself, and I invited any readers who chose to make the journey with me to join me on the high wire. I would work without a net and without the noise of the crowd to disturb me. The view from on high is dizzying, instructive. I do not record the world exactly as it comes to me but transform it by making it pass through a prism of fabulous stories I have collected on the way. I gather stories the way a lepidopterist hoards his chloroformed specimens of rare moths, or Costa Rican beetles. Stories are like vessels I use to interpret the world to myself. ----------Pat Conroy Which of the following best describes the organization of the passage?",
+    "choices": {
+      "A": "The author provides several explanations for taking a certain course of action.",
+      "B": "The author uses analogies to explain his experience of a particular action.",
+      "C": "The author makes a comparison between his own experiences and that of others in his profession.",
+      "D": "The author chronicles the various phases of his work in a particular discipline."
+    },
+    "correct_answer": "B",
+    "category": "miscellaneous"
+  },
+  {
+    "question_id": "mmlu_002",
+    "question": "Conductor is static and the field is varying then emf will be induced. This principle is called",
+    "choices": {
+      "A": "virtually induced emf.",
+      "B": "dynamically induced emf.",
+      "C": "static induced emf.",
+      "D": "none of these"
+    },
+    "correct_answer": "C",
+    "category": "electrical_engineering"
+  },
+  {
+    "question_id": "mmlu_003",
+    "question": "Threats to IT systems can be classified in many ways; in this chapter three different categories of threat are listed. According to this classification, which of the following would be classified as a 'Failure'?",
+    "choices": {
+      "A": "Security systems were not adequate to protect the system against attack from a hacking group, and sensitive data was lost.",
+      "B": "There is a programming error in the software which causes the system to perform badly.",
+      "C": "All of these options.",
+      "D": "The IT system has failed due to a random unexpected event, such as a tsunami which destroys key electronic equipment."
+    },
+    "correct_answer": "B",
+    "category": "security_studies"
+  },
+  {
+    "question_id": "mmlu_004",
+    "question": "Find the GCD of 25 and 55.",
+    "choices": {
+      "A": "5",
+      "B": "11",
+      "C": "50",
+      "D": "275"
+    },
+    "correct_answer": "A",
+    "category": "elementary_mathematics"
+  },
+  {
+    "question_id": "mmlu_005",
+    "question": "Zoey is laying bricks for her patio. The salesman wants to sell Zoey as many bricks as possible to cover her patio with a thickness of one brick, while not having any extra bricks. The patio area is a rectangle with dimensions 12 feet by 10 feet, and each individual brick is 4 inches by 6 inches by 2 inches. What would be the greatest number of bricks the salesman could sell to meet his sales criteria?",
+    "choices": {
+      "A": "5,760",
+      "B": "2,880",
+      "C": "2,160",
+      "D": "1,440"
+    },
+    "correct_answer": "C",
+    "category": "high_school_mathematics"
+  },
+  {
+    "question_id": "mmlu_006",
+    "question": "Family therapy is probably contraindicated in which of the following situations?",
+    "choices": {
+      "A": "The presenting problem involves long-term marital conflict.",
+      "B": "Family members attribute their problems to one of the members.",
+      "C": "One of the family members has severe depression.",
+      "D": "One of the family members has anorexia or bulimia."
+    },
+    "correct_answer": "C",
+    "category": "professional_psychology"
+  },
+  {
+    "question_id": "mmlu_007",
+    "question": "Which of the following training methods will develop 2 response most resistant to extinction",
+    "choices": {
+      "A": "Partial reinforcement",
+      "B": "Large magnitude reinforcement",
+      "C": "Mild punishment for each failure to respond",
+      "D": "Reinforcement on every trial"
+    },
+    "correct_answer": "A",
+    "category": "professional_psychology"
+  },
+  {
+    "question_id": "mmlu_008",
+    "question": "Which of the following statements about proteolysis is correct?\n",
+    "choices": {
+      "A": "The rate of tissue protein catabolism is more or less constant throughout the day.",
+      "B": "All tissue proteins undergo catabolism at more or less the same rate.",
+      "C": "All proteins that are to be catabolised are tagged with the peptide ubiquitin.",
+      "D": "Lysosomal enzymes provide the only mechanism for tissue protein catabolism."
+    },
+    "correct_answer": "A",
+    "category": "nutrition"
+  },
+  {
+    "question_id": "mmlu_009",
+    "question": "Tisha wrote the following riddle to her friend: I have 2 faces, no vertices, and I can roll. What am I? What is the answer to the riddle?",
+    "choices": {
+      "A": "cone",
+      "B": "cylinder",
+      "C": "sphere",
+      "D": "prism"
+    },
+    "correct_answer": "B",
+    "category": "elementary_mathematics"
+  },
+  {
+    "question_id": "mmlu_010",
+    "question": "The term Schwarzschild radius usually describes properties of ...",
+    "choices": {
+      "A": "red dwarfs.",
+      "B": "pulsars.",
+      "C": "black holes.",
+      "D": "galaxies."
+    },
+    "correct_answer": "C",
+    "category": "astronomy"
+  }
+]

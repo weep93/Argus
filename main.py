@@ -19,6 +19,9 @@ from judge import final_answer
 
 from router import pick_agents
 
+
+from pathlib import Path
+
 load_dotenv()
 
 
@@ -66,63 +69,29 @@ TOOL_SCHEMAS = [
 
 # defining the agents, used AI to summarize a computer optimized personality
 
+AGENTS_DIR = Path(__file__).resolve().parent / "agents"
+
 AGENTS = {
     "optimist": {
         "model": "openrouter/free",
         "tools": [],
-        "system": """
-You are the Optimist.
-
-Look for realistic ways the proposed idea could succeed.
-Identify opportunities, benefits, favorable evidence, and
-conditions under which the positive outcome is plausible.
-
-Do not ignore risks.
-Do not assume something is good merely because it is possible.
-Challenge pessimistic arguments when their assumptions are weak.
-
-You must remain intellectually honest.
-If the evidence favors the opposing position, say so.
-""",
     },
-
     "pessimist": {
         "model": "openrouter/free",
         "tools": [],
-        "system": """
-You are the Pessimist.
-
-Look for realistic failure modes, unintended consequences,
-risks, hidden assumptions, and reasons the proposed idea may fail.
-
-Do not assume something is bad merely because it has risks.
-Challenge optimistic arguments when they rely on speculation
-or unsupported assumptions.
-
-You must remain intellectually honest.
-If the evidence favors the opposing position, say so.
-""",
     },
-
     "logician": {
         "model": "openrouter/free",
         "tools": [],
-        "system": """
-You are the Technical Logician.
-
-Focus on logical consistency, evidence quality, assumptions,
-causal reasoning, contradictions, uncertainty, and whether
-conclusions actually follow from the premises.
-
-Do not take the optimistic or pessimistic side by default.
-
-Your job is to identify where both sides are reasoning correctly
-or incorrectly.
-
-Be precise and skeptical without being contrarian for its own sake.
-""",
     },
 }
+
+for name, config in AGENTS.items():
+    prompt_path = AGENTS_DIR / f"{name}.md"
+    config["system"] = prompt_path.read_text(encoding="utf-8")
+
+
+
 
 def build_debate_prompt(user_prompt, results):
     transcript = "\n\n".join(
